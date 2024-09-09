@@ -1,4 +1,3 @@
-#include "engine.h"
 #include "typedef.h"
 
 #define NONE -1
@@ -18,10 +17,8 @@
 #define W_ALL 12 // white piece
 #define B_ALL 13 // black piece
 #define ALL 14 // occupancy
-#define ENPAS 15 // piece that may be captured en passant
-#define UNMOVED 16 // pieces that have not moved
 
-#define NUM_BITBOARDS 17
+#define NUM_BITBOARDS 15
 #define NUM_PIECE_TYPES 12
 
 #define WHITE_TEAM 0
@@ -30,12 +27,4 @@
 #define COL(i) (0x0101010101010101ULL << i)
 #define ROW(i) (0x00000000000000ffULL << (8 * i))
 
-extern u32 move(u64 *board, u32 *state_flags, u32 from, u32 to);
-extern u64 knight(i32 pos);
-extern u64 row_col(u64 occ, i32 pos);
-extern u64 diag_adiag(u64 occ, i32 pos);
-extern u64 king(i32 pos);
 extern void init_masks(void);
-u64 getPseudoLegalMoves(u64 *board, u32 state_flags, i32 pos, i32 type);
-extern u64 getLegalMoves(u64 *board, u32 *state_flags, i32 pos);
-extern void undo_move (u64 *board, u32 *state_flags, u32 momento);

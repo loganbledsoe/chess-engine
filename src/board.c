@@ -5,28 +5,10 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL.h>
 
-u64 ROW[8] = {ROW(0), ROW(1), ROW(2), ROW(3), ROW(4), ROW(5), ROW(6), ROW(7)}; // rows masks
-u64 COL[8] = {COL(0), COL(1), COL(2), COL(3), COL(4), COL(5), COL(6), COL(7)}; // column masks
-u64 DAG[15]; // diagonal masks
-u64 ADG[15]; // anti-diagonal masks
-
 i32 abs(i32 x) {
     if (x >= 0)
         return x;
     return -x;
-}
-
-void init_masks() {
-    DAG[7] = 0x8040201008040201ULL;
-    ADG[7] = 0x0102040810204080ULL;
-    for (i32 i = 6; i >= 0; --i) {
-        DAG[i] = (DAG[i + 1] >> 1) & ~COL(7);
-        ADG[i] = (ADG[i + 1] >> 1) & ~COL(7);
-    }
-    for (i32 i = 8; i < 15; ++i) {
-        DAG[i] = (DAG[i - 1] << 1) & ~COL(0);
-        ADG[i] = (ADG[i - 1] << 1) & ~COL(0);
-    }
 }
 
 u64 reverse(u64 a) {
@@ -45,35 +27,6 @@ u64 xorshift64star(void) {
     x ^= x << 25;
     x ^= x >> 27;
     return x * 0x2545F4914F6CDD1DULL;
-}
-
-u64 row_col(u64 occ, i32 pos) {
-    u64 rk = (0x1ULL << pos);
-
-    u64 row = occ & ROW[pos / 8];
-    row = (row - 2 * rk) ^ reverse(reverse(row) - 2 * reverse(rk));
-    row &= ROW[pos / 8];
-    
-    u64 col = occ & COL[pos % 8];
-    col = (col - 2 * rk) ^ reverse(reverse(col) - 2 * reverse(rk));
-    col &= COL[pos % 8];
-
-    return row | col;
-}
-
-// hyperbola quintessence
-u64 diag_adiag(u64 occ, i32 pos) {
-    u64 rk = (0x1ULL << pos);
-
-    u64 row = occ & DAG[7 - (pos / 8) + (pos % 8)];
-    row = (row - 2 * rk) ^ reverse(reverse(row) - 2 * reverse(rk));
-    row &= DAG[7 - (pos / 8) + (pos % 8)];
-    
-    u64 col = occ & ADG[(pos / 8) + (pos % 8)];
-    col = (col - 2 * rk) ^ reverse(reverse(col) - 2 * reverse(rk));
-    col &= ADG[(pos / 8) + (pos % 8)];
-
-    return row | col;
 }
 
     /* Returns a momento, a u32 where the 15
@@ -215,75 +168,6 @@ void undo_move (u64 *board, u32 *state_flags, u32 momento) {
     board[ALL] = board[W_ALL] | board[B_ALL];
 }
 
-u64 knight(i32 pos) {
-    u64 kn = 0x1ULL << pos;
-    u64 moves = 0;
-    moves |= (kn << 6) & ~(COL(6) | COL(7));
-    moves |= (kn >> 6) & ~(COL(0) | COL(1));
-    moves |= (kn << 10) & ~(COL(0) | COL(1));
-    moves |= (kn >> 10) & ~(COL(6) | COL(7));
-    moves |= (kn << 15) & ~COL(7);
-    moves |= (kn >> 15) & ~COL(0);
-    moves |= (kn << 17) & ~COL(0);
-    moves |= (kn >> 17) & ~COL(7);
-    return moves;
-}
-
-u64 pawn_w(u64 occ, u32 state_flags, i32 pos) {
-    u64 pawn = 0x1ULL << pos;
-    // forward one
-    u64 moves = pawn << 8;
-    moves &= ~occ;
-
-    // forward two
-    if (moves && (pawn & ROW[1])) {
-        moves |= moves << 8;
-        moves &= ~occ;
-    }
-
-    u64 enpas = 0;
-    // if ((state_flags & 0xF0) != 0xF0) {
-    //     enpas = COL[(state_flags >> 4) & 0xF] & ROW[4];
-    // }
-
-    // capture (includes en passant)
-    moves |= (pawn << 7) & (occ | (enpas << 8)) & ~COL(7);
-    moves |= (pawn << 9) & (occ | (enpas << 8)) & ~COL(0);
-    return moves;
-}
-
-u64 pawn_b(u64 occ, u32 state_flags, i32 pos) {
-    u64 pawn = 0x1ULL << pos;
-    // forward one
-    u64 moves = pawn >> 8;
-    moves &= ~occ;
-
-    // forward two
-    if (moves && (pawn & ROW[6])) {
-        moves |= moves >> 8;
-        moves &= ~occ;
-    }
-
-    u64 enpas = 0;
-    // if ((state_flags & 0xF0) != 0xF0) {
-    //     enpas = COL[(state_flags >> 4) & 0xF] & ROW[3];
-    // }
-
-    // capture (includes en passant)
-    moves |= (pawn >> 7) & (occ | (enpas >> 8)) & ~COL(0);
-    moves |= (pawn >> 9) & (occ | (enpas >> 8)) & ~COL(7);
-    return moves;
-}
-
-u64 king(i32 pos) {
-    u64 kn = 0x1ULL << pos;
-    u64 moves_left = ((kn >> 1) | (kn >> 9) | (kn << 7));
-    moves_left &= ~COL(7);
-    u64 moves_right = ((kn << 1) | (kn << 9) | (kn >> 7));
-    moves_right &= ~COL(0);
-    return moves_left | moves_right | (kn << 8) | (kn >> 8);
-}
-
 u64 get_threats(u64 *board, i32 pos) {
     i32 team = WHITE_TEAM;
     if ((board[W_ALL] & (0x1ULL << pos)) != 0) {
@@ -326,36 +210,4 @@ u64 getLegalMoves(u64 *board, u32 *state_flags, i32 pos) {
         undo_move(board, state_flags, momento);
     }
     return legal_moves;
-}
-
-
-u64 getPseudoLegalMoves(u64 *board, u32 state_flags, i32 pos, i32 type) {
-    switch (type) {
-        case NONE:
-            return 0;
-        case W_KING:
-            return king(pos) & ~board[W_ALL];
-        case B_KING:
-            return king(pos) & ~board[B_ALL];
-        case W_QUEEN:
-            return (row_col(board[ALL], pos) | diag_adiag(board[ALL], pos)) & ~board[W_ALL];
-        case B_QUEEN:
-            return (row_col(board[ALL], pos) | diag_adiag(board[ALL], pos)) & ~board[B_ALL];
-        case W_ROOK:
-            return row_col(board[ALL], pos) & ~board[W_ALL];
-        case B_ROOK:
-            return row_col(board[ALL], pos) & ~board[B_ALL];
-        case W_BISHOP:
-            return diag_adiag(board[ALL], pos) & ~board[W_ALL];
-        case B_BISHOP:
-            return diag_adiag(board[ALL], pos) & ~board[B_ALL];
-        case W_KNIGHT:
-            return knight(pos) & ~board[W_ALL];
-        case B_KNIGHT:
-            return knight(pos) & ~board[B_ALL];
-        case W_PAWN:
-            return pawn_w(board[ALL], state_flags, pos) & ~board[W_ALL];
-        case B_PAWN:
-            return pawn_b(board[ALL], state_flags, pos) & ~board[B_ALL];
-    }
 }
