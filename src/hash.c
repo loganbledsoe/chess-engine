@@ -10,7 +10,7 @@ uint64_t castling_hash[TEAM_NB][CASTLING_SIDES];
 uint64_t black_to_move_hash;
 
 // returns a pseudo random unsigned 64-bit integer
-uint64_t xorshift64star(void) {
+static uint64_t xorshift64star(void) {
     static uint64_t x = 0x2C1929944248EEULL; // seed
     x ^= x >> 12;
     x ^= x << 25;

@@ -8,6 +8,5 @@
 #include "types.h"
 
 int parse_fen(char *str, board *board, game_state *state);
-void create_bb_from_arr(board *board);
 
 #endif //FEN_H

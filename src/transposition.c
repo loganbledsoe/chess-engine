@@ -4,7 +4,7 @@
 
 #include "transposition.h"
 
-#define TT_SIZE 10000007
+#define TT_SIZE 1000007
 
 transposition transposition_table[TT_SIZE];
 

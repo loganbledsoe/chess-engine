@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "hash.h"
-#include "move_gen.h"
+#include "move.h"
 #include "types.h"
 
 #define NUM_TOKENS 6
@@ -233,23 +233,18 @@ int parse_fen(char *str, board *board, game_state *state) {
     }
 
     if (parse_board(token[0], board)) {
-        printf("board\n");
         return FAILURE;
     }
     if (parse_team_to_move(token[1], state)) {
-        printf("team to mpve\n");
         return FAILURE;
     }
     if (parse_castling_rights(token[2], state)) {
-        printf("caslting\n");
         return FAILURE;
     }
     if (parse_en_passant(token[3], state)) {
-        printf("enpas\n");
         return FAILURE;
     }
     if (parse_half_move_cnt(token[4], state)) {
-        printf("half move cnt\n");
         return FAILURE;
     }
 

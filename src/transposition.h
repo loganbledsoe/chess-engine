@@ -11,8 +11,8 @@ typedef struct {
     uint16_t key; // most significant 16 bits of position hash
     uint16_t move; // best move
     int16_t score; // position evaluation
-    uint8_t type; // type of evaluation: exact, lower bound (alpha), or upper bound (beta)
-    uint8_t depth; // depth of search, 0 for quiescence search
+    uint8_t type; // type of evaluation: exact, lower bound, or upper bound
+    uint8_t depth; // depth of search, 0 for quiescence search (planned)
 
 } transposition;
 

@@ -9,13 +9,8 @@
 #include <string.h>
 
 #include "types.h"
-#include "move_make.h"
-#include "move_gen.h"
+#include "move.h"
 #include "print.h"
-
-static uint8_t get_flags(uint16_t move) {
-    return move >> 12;
-}
 
 // checks if flags match double pawn push
 static uint8_t is_double_pawn_push(uint8_t flags) {
@@ -53,19 +48,19 @@ void perft_detailed(perft_results *results, board *bd, game_state *state, uint32
         results->promotions += is_promotion(get_flags(state->last_move));
         results->checks += state->in_check != 0;
 
-        uint16_t move_list[256];
-        uint32_t num_moves = get_move_list(bd, state, move_list);
-        num_moves = remove_illegal_moves(bd, state, move_list, num_moves);
-        results->checkmates += (state->in_check != 0) && (num_moves == 0);
+        move_list mv_list;
+        get_move_list(bd, state, &mv_list);
+        remove_illegal_moves(bd, state, &mv_list);
+        results->checkmates += (state->in_check != 0) && (mv_list.size == 0);
 
         return;
     }
-    uint16_t move_list[256];
-    uint32_t move_cnt = get_move_list(bd, state, move_list);
+    move_list mv_list;
+    get_move_list(bd, state, &mv_list);
     game_state momento;
-    for (uint32_t i = 0; i < move_cnt; i++) {
+    for (uint32_t i = 0; i < mv_list.size; i++) {
         memcpy(&momento, state, sizeof(game_state));
-        make_move(bd, state, move_list[i]);
+        make_move(bd, state, mv_list.moves[i]);
         if (!get_threats(bd, state, __builtin_ctzll(bd->type_bb[!state->team_to_move]), !state->team_to_move)) {
             perft_detailed(results, bd, state, depth - 1);
         }
@@ -79,12 +74,12 @@ uint64_t perft(board *bd, game_state *state, uint32_t depth) {
         return 0x1ULL;
     }
     uint64_t num_nodes = 0ULL;
-    uint16_t move_list[256];
-    uint32_t move_cnt = get_move_list(bd, state, move_list);
+    move_list mv_list;
+    get_move_list(bd, state, &mv_list);
     game_state momento;
-    for (uint32_t i = 0; i < move_cnt; i++) {
+    for (uint32_t i = 0; i < mv_list.size; i++) {
         memcpy(&momento, state, sizeof(game_state));
-        make_move(bd, state, move_list[i]);
+        make_move(bd, state, mv_list.moves[i]);
         if (!get_threats(bd, state, __builtin_ctzll(bd->type_bb[!state->team_to_move]), !state->team_to_move)) {
             num_nodes += perft(bd, state, depth - 1);
         }

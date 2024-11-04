@@ -4,7 +4,9 @@
 
 #include "print.h"
 
-char sq_to_str[64][3] = {
+#include "move.h"
+
+char sq_to_str[SQ_NB][3] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
     "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
     "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
@@ -15,7 +17,7 @@ char sq_to_str[64][3] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"
 };
 
-static char type_to_str[12][13] = {
+static char type_to_str[TYPE_NB][13] = {
     [W_KING] = "WHITE KING",
     [B_KING] = "BLACK KING",
     [W_QUEEN] = "WHITE QUEEN",
@@ -46,9 +48,9 @@ void print_move(uint16_t move) {
     printf("%s to %s, ", sq_to_str[move & 0x3f], sq_to_str[(move >> 6) & 0x3f]);
 }
 
-void print_move_list(uint16_t *move_list, uint32_t len) {
-    for (uint32_t i = 0; i < len; i++) {
-        print_move(move_list[i]);
+void print_move_list(move_list *mv_list) {
+    for (uint32_t i = 0; i < mv_list->size; i++) {
+        print_move(mv_list->moves[i]);
     }
     printf("\n");
 }

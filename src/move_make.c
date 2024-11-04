@@ -1,10 +1,8 @@
-#include "move_make.h"
-
 #include <stdio.h>
 #include <string.h>
 
 #include "hash.h"
-#include "move_gen.h"
+#include "move.h"
 #include "print.h"
 //
 // Created by Logan on 9/10/2024.
@@ -45,21 +43,6 @@
 
 extern start_sq st_sq;
 extern castling_info castl_info[TEAM_NB][CASTLING_SIDES];
-
-// extracts the lower 6 bits of the move corresponding to the "from square" of the move
-static uint8_t get_from_sq(uint16_t move) {
-    return move & 0x3F;
-}
-
-// extracts the 6 bits of the move corresponding to the "to square" of the move
-static uint8_t get_to_sq(uint16_t move) {
-    return (move >> 6) & 0x3F;
-}
-
-// extracts the upper 4 bits corresponding to the flags of the move
-static uint8_t get_flags(uint16_t move) {
-    return move >> 12;
-}
 
 // checks if flags match double pawn push
 static uint8_t is_double_pawn_push(uint8_t flags) {
